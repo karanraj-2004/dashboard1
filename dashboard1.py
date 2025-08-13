@@ -2,72 +2,38 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Load data
-file_path = "Mock_up_data .xlsx"
+st.set_page_config(page_title="Sales Dashboard", layout="wide")
 
-df = pd.read_excel(file_path)
+# Title
+st.title("📊 Sales Dashboard with Excel Upload")
 
-# Convert Date column to datetime
-df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+# File uploader
+uploaded_file = st.file_uploader("📂 Upload your Excel file", type=["xlsx", "xls"])
 
-# Sidebar Filters
-st.sidebar.header("📊 Filter Data")
-date_range = st.sidebar.date_input(
-    "Select Date Range",
-    [df['Date'].min(), df['Date'].max()]
-)
+if uploaded_file is not None:
+    try:
+        # Read Excel file
+        df = pd.read_excel(uploaded_file)
 
-city_filter = st.sidebar.multiselect("Select City", options=df['City'].unique())
-state_filter = st.sidebar.multiselect("Select State", options=df['State'].unique())
+        st.success("✅ File uploaded successfully!")
+        st.write("### Data Preview")
+        st.dataframe(df)
 
-# Apply Filters
-filtered_df = df[
-    (df['Date'] >= pd.to_datetime(date_range[0])) &
-    (df['Date'] <= pd.to_datetime(date_range[1]))
-]
+        # Optional: Display basic stats
+        st.write("### Dataset Info")
+        st.write(f"Number of rows: {df.shape[0]}")
+        st.write(f"Number of columns: {df.shape[1]}")
 
-if city_filter:
-    filtered_df = filtered_df[filtered_df['City'].isin(city_filter)]
-if state_filter:
-    filtered_df = filtered_df[filtered_df['State'].isin(state_filter)]
+        # Example dashboard chart (edit as per your actual data columns)
+        if "Sales" in df.columns and "Date" in df.columns:
+            fig = px.line(df, x="Date", y="Sales", title="Sales Over Time")
+            st.plotly_chart(fig, use_container_width=True)
 
-# KPI Metrics
-total_qty = filtered_df['Qty'].sum()
-num_products = filtered_df['Product Description'].nunique()
-top_product = filtered_df.groupby('Product Description')['Qty'].sum().idxmax()
+    except Exception as e:
+        st.error(f"❌ Error reading the file: {e}")
 
-st.title("📈 Sales Dashboard")
-
-col1, col2, col3 = st.columns(3)
-col1.metric("Total Qty", f"{total_qty}")
-col2.metric("Number of Products", f"{num_products}")
-col3.metric("Top Product", top_product)
-
-# --- Product vs Qty Bar Chart ---
-bar_data = filtered_df.groupby('Product Description', as_index=False)['Qty'].sum()
-fig_bar = px.bar(bar_data, x='Product Description', y='Qty',
-                 title="Product vs Qty", text='Qty')
-fig_bar.update_traces(texttemplate='%{text}', textposition='outside')
-st.plotly_chart(fig_bar, use_container_width=True)
-
-# --- Product Share Pie Chart ---
-fig_pie = px.pie(bar_data, names='Product Description', values='Qty',
-                 title="Product Share by Qty")
-st.plotly_chart(fig_pie, use_container_width=True)
-
-# --- Qty Over Time Line Chart ---
-time_data = filtered_df.groupby('Date', as_index=False)['Qty'].sum()
-fig_line = px.line(time_data, x='Date', y='Qty',
-                   title="Qty Over Time", markers=True)
-st.plotly_chart(fig_line, use_container_width=True)
-
-# Download Filtered Data
-st.download_button(
-    label="Download Filtered Data",
-    data=filtered_df.to_csv(index=False).encode('utf-8'),
-    file_name="filtered_sales.csv",
-    mime="text/csv"
-)
+else:
+    st.info("Please upload an Excel file to view the dashboard.")
 
 
 
