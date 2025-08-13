@@ -3,7 +3,8 @@ import pandas as pd
 import plotly.express as px
 
 # Load data
-file_path = r"C:\Users\karan\Downloads\Mock_up_data .xlsx"
+file_path = "Mock_up_data .xlsx"
+
 df = pd.read_excel(file_path)
 
 # Convert Date column to datetime
@@ -67,5 +68,6 @@ st.download_button(
     file_name="filtered_sales.csv",
     mime="text/csv"
 )
+
 
 
