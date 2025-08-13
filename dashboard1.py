@@ -52,6 +52,7 @@ if uploaded_file is not None:
     if numeric_cols:
         selected_metric = st.sidebar.selectbox("Select Metric", numeric_cols, index=0)
     else:
+        st.warning("No numeric columns found for metrics.")
         selected_metric = None
 
     # --- KPI Metrics ---
@@ -59,8 +60,8 @@ if uploaded_file is not None:
 
     if selected_metric:
         total_value = filtered_df[selected_metric].sum()
-        col1, col2, col3 = st.columns(3)
-        col1.metric(f"Total {selected_metric}", f"{total_value:,.2f}")
+    else:
+        total_value = 0
 
     if 'Product Description' in filtered_df.columns and selected_metric:
         num_products = filtered_df['Product Description'].nunique()
@@ -72,9 +73,10 @@ if uploaded_file is not None:
         num_products = 0
         top_product = "N/A"
 
-    if selected_metric:
-        col2.metric("Number of Products", f"{num_products}")
-        col3.metric("Top Product", top_product)
+    col1, col2, col3 = st.columns(3)
+    col1.metric(f"Total {selected_metric}", f"{total_value}")
+    col2.metric("Number of Products", f"{num_products}")
+    col3.metric("Top Product", top_product)
 
     # --- Charts ---
     if not filtered_df.empty and selected_metric:
@@ -100,7 +102,7 @@ if uploaded_file is not None:
 
     # --- Download Filtered Data ---
     st.download_button(
-        label="📥 Download Filtered Data",
+        label="📥 Download Filtered Data (CSV)",
         data=filtered_df.to_csv(index=False).encode('utf-8'),
         file_name="filtered_sales.csv",
         mime="text/csv"
